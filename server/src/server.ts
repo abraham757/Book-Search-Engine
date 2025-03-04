@@ -4,7 +4,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import path from 'node:path';
 
 import { typeDefs, resolvers } from './schemas/index.js';
-import db from './config/connection.js';
+
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -15,7 +15,6 @@ const server = new ApolloServer({
 
 const startApolloServer = async () => {
   await server.start();
-  await new Promise((resolve) => db.once('open', resolve));
 
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());

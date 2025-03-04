@@ -1,24 +1,46 @@
-import { gql } from 'apollo-server-express';
+const typeDefs = `
+type Book {
+  bookId: ID!
+  authors: [String]
+  description: String!
+  title: String!
+  image: String
+  link: String
+}
+  
+type User {
+  _id: ID!
+  username: String!
+  email: String!
+  bookCount: Int
+  savedBooks: [Book]
+}
 
-export const typeDefs = gql`
-  # User type definition
-  type User {
-    id: ID!
-    username: String!
-    email: String!
-    friends: [User]
-  }
+type Auth {
+  token: ID!
+  user: User
+}
 
-  # Queries
-  type Query {
-    users: [User]        # Fetch all users
-    user(id: ID!): User  # Fetch a single user by ID
-  }
-
-  # Mutations
-  type Mutation {
-    addUser(username: String!, email: String!): User # Create a new user
-  }
-`;
+input BookInput {
+  bookId: String!
+  authors: [String]
+  description: String!
+  title: String!
+  image: String
+  link: String
+}
+  
+type Query {
+  me: User
+  books: [Book]  # Add this line to match your resolver
+  user(username: String): User  # Add this line to match your resolver
+}
+    
+type Mutation {
+  login(email: String!, password: String!): Auth
+  addUser(username: String!, email: String!, password: String!): Auth
+  saveBook(bookData: BookInput!): User
+  removeBook(bookId: ID!): User
+}`
 
 export default typeDefs;
