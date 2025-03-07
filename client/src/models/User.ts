@@ -6,3 +6,4 @@ export interface User {
   password: string | null;
   savedBooks: Book[];
 }
+export type { Book as default }

@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-
-import { createUser } from '../utils/API';
+import { useMutation } from '@apollo/client';
+import { ADD_USER } from '../utils/mutation';
 import Auth from '../utils/auth';
 import type { User } from '../models/User';
 
-// biome-ignore lint/correctness/noEmptyPattern: <explanation>
-const SignupForm = ({}: { handleModalClose: () => void }) => {
+const SignupForm = ({ handleModalClose }: { handleModalClose: () => void }) => {
   // set initial form state
   const [userFormData, setUserFormData] = useState<User>({ username: '', email: '', password: '', savedBooks: [] });
   // set state for form validation
-  const [validated] = useState(false);
+  const [validated, setValidated] = useState(false);
   // set state for alert
   const [showAlert, setShowAlert] = useState(false);
+  
+  // Set up mutation
+  const [addUser, { error }] = useMutation(ADD_USER);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -26,21 +28,38 @@ const SignupForm = ({}: { handleModalClose: () => void }) => {
     // check if form has everything (as per react-bootstrap docs)
     const form = event.currentTarget;
     if (form.checkValidity() === false) {
-      event.preventDefault();
-      event.stopPropagation();
+      setValidated(true);
+      return; // Exit early if validation fails
     }
 
-    try {
-      const response = await createUser(userFormData);
+    // Set validated to true even if form is valid
+    setValidated(true);
 
-      if (!response.ok) {
-        throw new Error('something went wrong!');
+    try {
+      console.log('Submitting with GraphQL:', userFormData);
+      
+      // Execute the mutation
+      const { data } = await addUser({
+        variables: { 
+          username: userFormData.username,
+          email: userFormData.email,
+          password: userFormData.password
+        }
+      });
+      
+      console.log('GraphQL response:', data);
+
+      if (!data || !data.addUser || !data.addUser.token) {
+        throw new Error('Something went wrong with the signup process!');
       }
 
-      const { token } = await response.json();
-      Auth.login(token);
+      // Use the token from the GraphQL response
+      Auth.login(data.addUser.token);
+      
+      // Close the modal after successful login
+      handleModalClose();
     } catch (err) {
-      console.error(err);
+      console.error('Signup error:', err);
       setShowAlert(true);
     }
 
@@ -58,7 +77,7 @@ const SignupForm = ({}: { handleModalClose: () => void }) => {
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
         {/* show alert if server response is bad */}
         <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
-          Something went wrong with your signup!
+          {error ? error.message : 'Something went wrong with your signup!'}
         </Alert>
 
         <Form.Group className='mb-3'>
