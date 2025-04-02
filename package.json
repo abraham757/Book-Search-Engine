@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "apollo-server-express": "^3.13.0",
+    "dotenv": "^16.4.7",
     "googlebooks-app": "file:",
     "graphql": "^16.10.0"
   }
